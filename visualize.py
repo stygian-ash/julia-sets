@@ -15,27 +15,6 @@ def imshow_color_domain(f):
 	x, y = np.ogrid[-xs:xe:1j*rx, ys:ye:1j*ry]
 	plt.imshow(np.angle(f((x - 1j*y).T)), cmap=mpl.colormaps['twilight_shifted'])
 
-def quiver_ex():
-	# Meshgrid 
-	x, y = np.meshgrid(np.linspace(-5, 5, 10),  
-					   np.linspace(-5, 5, 10)) 
-	  
-	# Directional vectors 
-	u = -y/np.sqrt(x**2 + y**2) 
-	v = x/(x**2 + y**2) 
-	  
-	# Plotting Vector Field with QUIVER 
-	plt.quiver(x, y, u, v, color='g') 
-	plt.title('Vector Field') 
-	  
-	# Setting x, y boundary limits 
-	plt.xlim(-7, 7) 
-	plt.ylim(-7, 7) 
-	  
-	# Show plot with grid 
-	plt.grid() 
-	plt.show() 
-
 # adapted from mpmath's default
 def colorize(z):
 	if cmath.isinf(z):
@@ -48,6 +27,24 @@ def colorize(z):
 	b = 1.0 - float(1/(1.0+np.abs(z)**0.3))
 	#return hls_to_rgb(a, b, 0.8)
 	return mpl.colormaps['twilight'](a)[0:3]
+
+def plot_difference_field(f, xmin=-5, xmax=5, ymin=-5, ymax=5, axes=plt, points=20):
+	x, y = np.ogrid[xmin:xmax:1j*points, ymin:ymax:1j*points]
+	zs = np.ndarray.flatten(x + y * 1j)
+	ds = f(zs) - zs
+	xs = [z.real for z in zs]
+	ys = [z.imag for z in zs]
+	us = np.asarray([z.real for z in ds])
+	vs = np.asarray([z.imag for z in ds])
+	color = np.sqrt(us**2, vs**2)
+	color /= np.max(color)
+	color = mpl.colormaps['viridis'](color)
+	axes.set_xlabel('Re(z)')
+	axes.set_ylabel('Im(z)')
+	axes.set_title('Flow Field')
+	axes.quiver(xs, ys, us, vs,
+				  angles='xy', width=2.5e-3,
+				  color=color)
 
 if __name__ == '__main__':
 	fig, axs = plt.subplots(2, 2)
@@ -67,17 +64,6 @@ if __name__ == '__main__':
 	# 	  axes=axs3d)
 
 
-	x, y = np.ogrid[xmin:xmax:20j, ymin:ymax:20j]
-	zs = np.ndarray.flatten(x + y * 1j)
-	ds = f(zs) - zs
-	xs = [z.real for z in zs]
-	ys = [z.imag for z in zs]
-	us = [z.real for z in ds]
-	vs = [z.imag for z in ds]
-	axs[1][1].set_xlabel('Re(z)')
-	axs[1][1].set_ylabel('Im(z)')
-	axs[1][1].set_title('Flow Field')
-	axs[1][1].quiver(xs, ys, us, vs,
-				  angles='xy', width=2.5e-3)
+	plot_difference_field(f, xmin, xmax, ymin, ymax, axes=axs[1][0])
 
 	plt.show()

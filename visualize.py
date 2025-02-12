@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 import cmath
+import logging
 
 import numpy as np
 from mpmath import mp
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-# from collections.abc import Callable
-# 
-# type ComplexFn = Callable[[complex], complex]
+
+logger = logging.getLogger(__name__)
 
 # see https://www.reddit.com/r/Python/comments/ext3zo/a_very_short_domain_coloring_script
 def imshow_color_domain(f):
@@ -62,13 +62,22 @@ def plot_julia_set(f, xmin=5, xmax=5, ymin=-5, ymax=-5, points=50, axes=plt,
 	axes.imshow(image / iterlimit, extent=(xmin, xmax, ymin, ymax), origin='lower')
 
 def main():
+	logging.basicConfig(level=logging.INFO)
+	logging.info('Started')
 	fig, axs = plt.subplots(2, 2)
 	xmin, xmax = -2, 2
 	ymin, ymax = xmin, xmax
+
+	latex = r'f(z) = z^2 - (0.5251993+0.5251993i)'
+	logging.info(f'Processing function ${latex}$')
 	f = lambda z: z**2 + -0.5251993-0.5251993j
+	fig.suptitle(f'${latex}$')
+
+	logging.info('Plotting domain')
 	mp.cplot(lambda z: z, points=2e4, axes=axs[0][0],
 		  re=[xmin, xmax], im=[ymin, ymax], color=None)
 	axs[0][0].set_title('Domain')
+	logging.info('Plotting range')
 	mp.cplot(f, points=2e4, axes=axs[0][1],
 		  re=[xmin, xmax], im=[ymin, ymax], color=None)
 	axs[0][1].set_title('Range')
@@ -78,9 +87,13 @@ def main():
 	# 	  u=[xmin, xmax], v=[ymin, ymax],
 	# 	  axes=axs3d)
 
+	logging.info('Plotting difference field')
 	plot_difference_field(f, xmin, xmax, ymin, ymax, axes=axs[1][0])
-	plot_julia_set(f, xmin, xmax, ymin, ymax, points=2e3, iterlimit=100, axes=axs[1][1])
 
+	logging.info('Plotting Julia set')
+	plot_julia_set(f, xmin, xmax, ymin, ymax, points=500, iterlimit=100, axes=axs[1][1])
+
+	logging.info('Finished')
 	plt.show()
 
 if __name__ == '__main__':

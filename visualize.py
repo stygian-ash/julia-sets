@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import cmath
+
 import numpy as np
 from mpmath import mp
 import matplotlib as mpl
@@ -33,6 +35,19 @@ def quiver_ex():
 	# Show plot with grid 
 	plt.grid() 
 	plt.show() 
+
+# adapted from mpmath's default
+def colorize(z):
+	if cmath.isinf(z):
+		return (1.0, 1.0, 1.0)
+	if cmath.isnan(z):
+		return (0.5, 0.5, 0.5)
+	pi = 3.1415926535898
+	a = (float(cmath.phase(z)) + pi) / (2*pi)
+	a = (a + 0.5) % 1.0
+	b = 1.0 - float(1/(1.0+np.abs(z)**0.3))
+	#return hls_to_rgb(a, b, 0.8)
+	return mpl.colormaps['twilight'](a)[0:3]
 
 if __name__ == '__main__':
 	fig, axs = plt.subplots(2, 2)

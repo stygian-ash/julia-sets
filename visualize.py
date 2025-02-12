@@ -30,7 +30,7 @@ def colorize(z):
 
 def plot_difference_field(f, xmin: float = -5, xmax: float = 5, ymin: float = -5, ymax: float = 5, axes=plt, points=20):
 	x, y = np.ogrid[xmin:xmax:1j*points, ymin:ymax:1j*points]
-	zs = np.ndarray.flatten(x + y * 1j)
+	zs = np.ndarray.flatten(x + 1j * y)
 	ds = f(zs) - zs
 	xs = [z.real for z in zs]
 	ys = [z.imag for z in zs]
@@ -49,7 +49,7 @@ def plot_difference_field(f, xmin: float = -5, xmax: float = 5, ymin: float = -5
 def plot_julia_set(f, xmin=5, xmax=5, ymin=-5, ymax=-5, points=50, axes=plt,
 				   iterlimit=10, cutoff=2):
 	x, y = np.ogrid[xmin:xmax:1j*points, ymin:ymax:1j*points]
-	z0 = x + y*1j
+	z0 = (x - y*1j).T
 	z = f(z0)
 	thresh = cutoff * np.abs(z0)
 	image = np.zeros_like(z0, float)
@@ -61,26 +61,27 @@ def plot_julia_set(f, xmin=5, xmax=5, ymin=-5, ymax=-5, points=50, axes=plt,
 	axes.set_title('Julia Set')
 	axes.imshow(image / iterlimit, extent=(xmin, xmax, ymin, ymax), origin='lower')
 
-if __name__ == '__main__':
-	# fig, axs = plt.subplots(2, 2)
-	fig, axs = plt.subplots()
+def main():
+	fig, axs = plt.subplots(2, 2)
 	xmin, xmax = -2, 2
 	ymin, ymax = xmin, xmax
 	f = lambda z: z**2 + -0.5251993-0.5251993j
-	# mp.cplot(lambda z: z, points=2e4, axes=axs[0][0],
-	# 	  re=[xmin, xmax], im=[ymin, ymax], color=None)
-	# axs[0][0].set_title('Domain')
-	# mp.cplot(f, points=2e4, axes=axs[0][1],
-	# 	  re=[xmin, xmax], im=[ymin, ymax], color=None)
-	# axs[0][1].set_title('Range')
+	mp.cplot(lambda z: z, points=2e4, axes=axs[0][0],
+		  re=[xmin, xmax], im=[ymin, ymax], color=None)
+	axs[0][0].set_title('Domain')
+	mp.cplot(f, points=2e4, axes=axs[0][1],
+		  re=[xmin, xmax], im=[ymin, ymax], color=None)
+	axs[0][1].set_title('Range')
 
 	# axs3d = fig.add_subplot(1, 2, 1, projection='3d')
 	# mp.splot(lambda x, y: np.abs(f(x + 1j*y)),
 	# 	  u=[xmin, xmax], v=[ymin, ymax],
 	# 	  axes=axs3d)
 
-	# plot_difference_field(f, xmin, xmax, ymin, ymax, axes=axs[1][0])
-	# plot_julia_set(f, xmin, xmax, ymin, ymax, points=2e3, iterlimit=100, axes=axs[1][1])
-	plot_julia_set(f, xmin, xmax, ymin, ymax, points=3e3, iterlimit=100, axes=axs)
+	plot_difference_field(f, xmin, xmax, ymin, ymax, axes=axs[1][0])
+	plot_julia_set(f, xmin, xmax, ymin, ymax, points=2e3, iterlimit=100, axes=axs[1][1])
 
 	plt.show()
+
+if __name__ == '__main__':
+	main()

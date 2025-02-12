@@ -41,7 +41,7 @@ def plot_difference_field(f, xmin: float = -5, xmax: float = 5, ymin: float = -5
 	color = mpl.colormaps['viridis'](color)
 	axes.set_xlabel('Re(z)')
 	axes.set_ylabel('Im(z)')
-	axes.set_title('Flow Field')
+	axes.set_title('Difference Field')
 	axes.quiver(xs, ys, us, vs,
 				  angles='xy', width=2.5e-3,
 				  color=color)

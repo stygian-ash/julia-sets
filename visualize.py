@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import sys
 import cmath
 import logging
 
@@ -61,39 +62,34 @@ def plot_julia_set(f, xmin=5, xmax=5, ymin=-5, ymax=-5, points=50, axes=plt,
 	axes.set_title('Julia Set')
 	axes.imshow(image / iterlimit, extent=(xmin, xmax, ymin, ymax), origin='lower')
 
+def plot_quadratic_julia_set(c, xmin=5, xmax=5, ymin=-5, ymax=-5, points=50, axes=plt,
+							 iterlimit=10):
+	x, y = np.ogrid[xmin:xmax:1j*points, ymin:ymax:1j*points]
+	z0 = (x + y*1j).T
+	z = z0**2 + c
+	thresh = max(abs(c), 2)
+	image = np.zeros_like(z0, float)
+	for step in range(iterlimit, 0, -1):
+		# indicator = np.logical_or(np.isnan(z), np.abs(z) > thresh)
+		indicator = np.abs(z) > thresh
+		image = np.maximum(image, step * indicator)
+		z = z**2 + c
+	axes.set_xlabel('Re(z)')
+	axes.set_ylabel('Im(z)')
+	axes.set_title(r'Filled Julia Set of $Q_{%s}(z) = z^2 + %s$' % (c, c))
+	axes.imshow(image / iterlimit, extent=(xmin, xmax, ymin, ymax), origin='lower')
+
 def main():
 	logging.basicConfig(level=logging.INFO)
 	logging.info('Started')
-	fig, axs = plt.subplots(2, 2)
 	xmin, xmax = -2, 2
 	ymin, ymax = xmin, xmax
 
-	latex = r'f(z) = z^2 - (0.5251993+0.5251993i)'
-	logging.info(f'Processing function ${latex}$')
-	f = lambda z: z**2 + -0.5251993-0.5251993j
-	fig.suptitle(f'${latex}$')
+	fig, ax = plt.subplots()
 
-	logging.info('Plotting domain')
-	mp.cplot(lambda z: z, points=2e4, axes=axs[0][0],
-		  re=[xmin, xmax], im=[ymin, ymax], color=None)
-	axs[0][0].set_title('Domain')
-	logging.info('Plotting range')
-	mp.cplot(f, points=2e4, axes=axs[0][1],
-		  re=[xmin, xmax], im=[ymin, ymax], color=None)
-	axs[0][1].set_title('Range')
+	plot_quadratic_julia_set(-0.1+0.8j, xmin=-2, xmax=2, ymin=-2, ymax=2,
+						  points=1000, iterlimit=50, axes=ax)
 
-	# axs3d = fig.add_subplot(1, 2, 1, projection='3d')
-	# mp.splot(lambda x, y: np.abs(f(x + 1j*y)),
-	# 	  u=[xmin, xmax], v=[ymin, ymax],
-	# 	  axes=axs3d)
-
-	logging.info('Plotting difference field')
-	plot_difference_field(f, xmin, xmax, ymin, ymax, axes=axs[1][0])
-
-	logging.info('Plotting Julia set')
-	plot_julia_set(f, xmin, xmax, ymin, ymax, points=500, iterlimit=100, axes=axs[1][1])
-
-	logging.info('Finished')
 	plt.show()
 
 if __name__ == '__main__':

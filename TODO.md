@@ -13,8 +13,7 @@
 - [ ] parallelize subfigures?
 
 # Math
-- [ ] investigate difference field (connection to diff eq?)
-    - [ ] divergence, curl of difference field?
+- [ ] investigate difference field (connection to diff eq?) [ ] divergence, curl of difference field?
 - [ ] difference field vs gradient
 - [ ] is there a useful notion of $f_{1 1/2}(z)$?
     - [ ] connection to the half derivative?
@@ -32,3 +31,7 @@
 - [ ] connection to space-filling curves?
 - [ ] line integrals along the flow field?
 - [ ] extension to hypercomplex number systems
+- [ ] why is the Julia set symmetric about the origin?
+
+# Applications
+- [ ] predicting weather patterns?

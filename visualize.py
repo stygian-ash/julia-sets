@@ -66,6 +66,7 @@ def plot_quadratic_julia_set(c, xmin=5, xmax=5, ymin=-5, ymax=-5, points=50, axe
 							 iterlimit=10):
 	x, y = np.ogrid[xmin:xmax:1j*points, ymin:ymax:1j*points]
 	z0 = (x + y*1j).T
+	c = complex(c)
 	z = z0**2 + c
 	thresh = max(abs(c), 2)
 	image = np.zeros_like(z0, float)
@@ -76,21 +77,32 @@ def plot_quadratic_julia_set(c, xmin=5, xmax=5, ymin=-5, ymax=-5, points=50, axe
 		z = z**2 + c
 	axes.set_xlabel('Re(z)')
 	axes.set_ylabel('Im(z)')
-	axes.set_title(r'Filled Julia Set of $Q_{%s}(z) = z^2 + %s$' % (c, c))
+	axes.set_title(r'$Q_c(z) = z^2 + (%.2g %+.2gi)$' % (c.real, c.imag))
 	axes.imshow(image / iterlimit, extent=(xmin, xmax, ymin, ymax), origin='lower')
 
-def main():
-	logging.basicConfig(level=logging.INFO)
-	logging.info('Started')
-	xmin, xmax = -2, 2
-	ymin, ymax = xmin, xmax
+def lerp(a, b, t):
+	return b * t + a * (1 - t)
 
-	fig, ax = plt.subplots()
+def make_spread(a, b, r, c):
+	plt.rcParams.update({'font.size': 10})
+	fig, axs = plt.subplots(r, c)
 
-	plot_quadratic_julia_set(-0.1+0.8j, xmin=-2, xmax=2, ymin=-2, ymax=2,
-						  points=1000, iterlimit=50, axes=ax)
-
+	a = complex(a)
+	b = complex(b)
+	for row in range(r):
+		for col in range(c):
+			plot_quadratic_julia_set(lerp(a, b, (c * row + col) / (r * c - 1)),
+							xmin=-2, xmax=2, ymin=-2, ymax=2,
+							points=500, iterlimit=50, axes=axs[row][col])
+			axs[row][col].set_xlabel(None)
+			axs[row][col].set_ylabel(None)
+	fig.suptitle(r'$c$ on line between $%.2g %+.2gi$ and $%.2g %+.2gi$'
+			  % (a.real, a.imag, b.real, b.imag))
+	# fig.tight_layout()
 	plt.show()
+
+def main():
+	make_spread(complex(sys.argv[1]), complex(sys.argv[2]), 3, 7)
 
 if __name__ == '__main__':
 	main()

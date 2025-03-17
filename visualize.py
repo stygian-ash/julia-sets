@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
+import re
 import sys
+import math
 import cmath
 import logging
 
@@ -48,22 +50,41 @@ def plot_difference_field(f, xmin: float = -5, xmax: float = 5, ymin: float = -5
 				  color=color)
 
 def plot_julia_set(f, xmin=5, xmax=5, ymin=-5, ymax=-5, points=50, axes=plt,
-				   iterlimit=10, cutoff=2):
+				   iterlimit=10, cutoff=2, binary=False):
 	x, y = np.ogrid[xmin:xmax:1j*points, ymin:ymax:1j*points]
 	z0 = (x - y*1j).T
 	z = f(z0)
 	thresh = cutoff * np.abs(z0)
 	image = np.zeros_like(z0, float)
 	for step in range(iterlimit, 0, -1):
-		image = np.maximum(image, step * (np.abs(z) > thresh))
+		image = np.maximum(image, (1 if binary else step) * (np.abs(z) > thresh))
 		z = f(z)
 	axes.set_xlabel('Re(z)')
 	axes.set_ylabel('Im(z)')
 	axes.set_title('Julia Set')
-	axes.imshow(image / iterlimit, extent=(xmin, xmax, ymin, ymax), origin='lower')
+	axes.imshow(image / (1 if binary else iterlimit), extent=(xmin, xmax, ymin, ymax), origin='lower')
+
+def texify(x, n=2, plus=False):
+	s = f'%{"+" if plus else ""}.{n}g' % x
+	if 'e' not in s:
+		return s
+	_, frac, exp = re.match(r'(\d+)e(-?\d+)', s)
+	if float(frac) == 1:
+		return f'10^{exp}'
+	return fr'{frac} \times 10^{exp}'
+
+def format_complex(z, n=2, paren=False, ε=1e-12):
+	if abs(z.imag) < ε:
+		if abs(z.real) < ε:
+			return '+0'
+		return texify(z.real, n, True)
+	if abs(z.real < ε):
+		return texify(z.imag, n, True) + 'i'
+	return texify(z.real, n, True) + texify(z.imag, n, True) + 'i'
+
 
 def plot_quadratic_julia_set(c, xmin=5, xmax=5, ymin=-5, ymax=-5, points=50, axes=plt,
-							 iterlimit=10):
+							 iterlimit=10, binary=False):
 	x, y = np.ogrid[xmin:xmax:1j*points, ymin:ymax:1j*points]
 	z0 = (x + y*1j).T
 	c = complex(c)
@@ -73,17 +94,17 @@ def plot_quadratic_julia_set(c, xmin=5, xmax=5, ymin=-5, ymax=-5, points=50, axe
 	for step in range(iterlimit, 0, -1):
 		# indicator = np.logical_or(np.isnan(z), np.abs(z) > thresh)
 		indicator = np.abs(z) > thresh
-		image = np.maximum(image, step * indicator)
+		image = np.maximum(image, (1 if binary else step) * indicator)
 		z = z**2 + c
 	axes.set_xlabel('Re(z)')
 	axes.set_ylabel('Im(z)')
-	axes.set_title(r'$Q_c(z) = z^2 + (%.2g %+.2gi)$' % (c.real, c.imag))
-	axes.imshow(image / iterlimit, extent=(xmin, xmax, ymin, ymax), origin='lower')
+	axes.set_title(r'$Q_c(z) = z^2 %s$' % (format_complex(c, 3)))
+	axes.imshow(image / (1 if binary else iterlimit), extent=(xmin, xmax, ymin, ymax), origin='lower')
 
 def lerp(a, b, t):
 	return b * t + a * (1 - t)
 
-def make_spread(a, b, r, c):
+def make_spread(a, b, r, c, ease=lambda z: z, overlap=True):
 	plt.rcParams.update({'font.size': 10})
 	fig, axs = plt.subplots(r, c)
 
@@ -91,18 +112,25 @@ def make_spread(a, b, r, c):
 	b = complex(b)
 	for row in range(r):
 		for col in range(c):
-			plot_quadratic_julia_set(lerp(a, b, (c * row + col) / (r * c - 1)),
+			plot_quadratic_julia_set(ease(lerp(a, b, (c * row + col) / (r * c - int(overlap)))),
 							xmin=-2, xmax=2, ymin=-2, ymax=2,
-							points=500, iterlimit=50, axes=axs[row][col])
+							points=1000, iterlimit=100, axes=axs[row][col])
 			axs[row][col].set_xlabel(None)
 			axs[row][col].set_ylabel(None)
-	fig.suptitle(r'$c$ on line between $%.2g %+.2gi$ and $%.2g %+.2gi$'
-			  % (a.real, a.imag, b.real, b.imag))
+	fig.suptitle(r'$c$ on line between $%s$ and $%s$'
+			  % (format_complex(a, 2), format_complex(b, 2)))
 	# fig.tight_layout()
-	plt.show()
+	return fig, axs
 
 def main():
-	make_spread(complex(sys.argv[1]), complex(sys.argv[2]), 3, 7)
+	fig, ax = plt.subplots()
+	plot_quadratic_julia_set(1j,
+						  xmin=-2, xmax=2, ymin=-2, ymax=2,
+						  points=5000, iterlimit=50, axes=ax)
+	# make_spread(complex(sys.argv[1]), complex(sys.argv[2]), 3, 7)
+	# fig, axs = make_spread(0, 2*math.pi, 3, 6, lambda θ: np.cos(θ) + np.sin(θ) * 1j, False)
+	# fig.suptitle('$c$ on unit circle')
+	plt.show()
 
 if __name__ == '__main__':
 	main()

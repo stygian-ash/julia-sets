@@ -73,14 +73,18 @@ def texify(x, n=2, plus=False):
 		return f'10^{exp}'
 	return fr'{frac} \times 10^{exp}'
 
-def format_complex(z, n=2, paren=False, ε=1e-12):
+def format_complex(z, n=2, plus=True, ε=1e-12):
 	if abs(z.imag) < ε:
 		if abs(z.real) < ε:
-			return '+0'
-		return texify(z.real, n, True)
+			return '+0' if plus else '0'
+		return texify(z.real, n, plus)
 	if abs(z.real < ε):
-		return texify(z.imag, n, True) + 'i'
-	return texify(z.real, n, True) + texify(z.imag, n, True) + 'i'
+		if abs(z.imag - 1) < ε:
+			return '+i' if plus else 'i'
+		return texify(z.imag, n, plus) + 'i'
+	if abs(z.imag - 1) < ε:
+		return texify(z.real, n, plus) + '+i'
+	return texify(z.real, n, plus) + texify(z.imag, n, True) + 'i'
 
 
 def plot_quadratic_julia_set(c, xmin=5, xmax=5, ymin=-5, ymax=-5, points=50, axes=plt,

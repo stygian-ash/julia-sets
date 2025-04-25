@@ -17,28 +17,36 @@
 \usepackage{graphicx}
 \usepackage{calc}
 \usepackage{booktabs}
-\usepackage{doi}
-\usepackage[numbers]{natbib}
 \usepackage[patch=none]{microtype}
 \usepackage{tikz}
 \usetikzlibrary{positioning, shapes, calc, arrows}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
 \usepackage{anyfontsize}
+
+\usepackage{doi}
+\usepackage[numbers]{natbib}
+
+\usepackage{fontspec}
+\setmonofont{IBM Plex Mono}
 \usepackage{minted}
 \setminted{
 	style = lovelace,
-	% frame = lines,
+	fontsize = \small,
 	tabsize = 4,
 	breaklines,
-	% linenos
+	autogobble
 }
 
 \usepackage{hyperref}
 \hypersetup{
 	colorlinks = true,
-	urlcolor = catalina-blue
+	urlcolor = catalina-blue,
+	citecolor = bear-gold,
+	linkcolor = bear-gold,
 }
+
+\usepackage{multicol}
 
 \pdfstringdefDisableCommands{%
 \def\translate#1{#1}%
@@ -75,6 +83,7 @@ Quadratic Julia Sets}
 \footercontent{
 	% \href{https://www.example.com}{https://www.example.com} \hfill
 	New York Tech Math Day 2025 \hfill
+	\href{https://github.com/stygian-ash/julia-sets}{\color{white}github.com/stygian-ash/julia-sets} \hfill
 	\href{mailto:eprieto@nyit.edu}{\color{white} eprieto@nyit.edu}}
 % (can be left out to remove footer)
 
@@ -106,15 +115,22 @@ Quadratic Julia Sets}
 % ====================
 
 \begin{document}
-% \addtobeamertemplate{headline}{}
-% {
-%     \begin{tikzpicture}[remember picture,overlay]
-%       \node [anchor=north west, inner sep=3cm] at ([xshift=0.0cm,yshift=1.0cm]current page.north west)
-%       {\includegraphics[height=5.0cm]{logos/uc-logo-white.eps}}; % also try shield-white.eps
-%       \node [anchor=north east, inner sep=3cm] at ([xshift=0.0cm,yshift=2.5cm]current page.north east)
-%       {\includegraphics[height=8.0cm]{logos/cs-logo-white.png}};
-%     \end{tikzpicture}
-% }
+\addtobeamertemplate{headline}{}
+{
+	\begin{tikzpicture}[remember picture,overlay]
+		\node[anchor=north west] (top-left)
+			at ($(current page.north west) + (.8cm, -.8cm)$)
+			{\includegraphics[width=2in]{../figures/md9p0i-ticks.png}};
+		\node[right=of top-left]
+			{\includegraphics[width=2in]{../figures/0p1i-ticks.png}};
+
+		\node[anchor=north east] (top-right)
+			at ($(current page.north east) + (-.8cm, -.8cm)$)
+			{\includegraphics[width=2in]{../figures/mandelbrot-ticks.png}};
+		\node[left=of top-right]
+			{\includegraphics[width=2in]{../figures/md966pd259i-ticks.png}};
+	\end{tikzpicture}
+}
 
 \begin{frame}[t]
 \begin{columns}[t]
@@ -138,7 +154,8 @@ Quadratic Julia Sets}
 		\]
 
 		Formally, the \textbf{filled Julia set} $K(Q_c)$
-		is the subset of the complex plane that remains bounded
+		is the set of complex numbers (``\textbf{seeds}'')
+		that remains bounded
 		under repeated application of $Q_c$. \[
 			% FIXME: different arrowheads
 			K(Q_c) := \left\{ z \in \CC : |Q_c^{m}(z)| \nrightarrow \infty\ \text{as}\ m \rightarrow \infty \right\}
@@ -152,10 +169,10 @@ Quadratic Julia Sets}
 		We can prove the following property, which will
 		be very useful in rendering filled Julia sets.
 
-    \textit{Lemma.}
+		\textit{Lemma.}
 		If $|Q_c^{m}(z)| > k$
 		for some $m$, then $|Q_c^{n}(z)| \rightarrow \infty$ as $n \rightarrow \infty$,
-    where $k = \max(|c|, 2)$.
+		where $k = \max(|c|, 2)$.
 
 		\textit{Proof.}
 		Let $w = Q_c^{m}(z)$. Then $Q_c^{n}(z) = Q_z^{m + \ell}(z) = Q_c^{\ell}(Q_c^{m}(z))$.
@@ -173,10 +190,14 @@ Quadratic Julia Sets}
 			\left\{ |Q_c^{m + 1}(z)|, |Q_c^{m + 2}(z)|, \ldots \right\}
 		\] is strictly increasing, so its limit goes to infinity. \hfill $\square$
 
-		We use this lemma in the code to determine whether a particular
-		seed $z$ should be part of $K(Q_c)$.
-	\end{alertblock}
 
+
+		We use this lemma in the code to determine whether a particular
+		seed $z$ should be part of $K(Q_c)$. \hfill \textit{\small This proof was adapted from \cite{ecsource}.}
+	\end{alertblock}
+	\hrule
+	\nocite{*}
+	\footnotesize{\bibliographystyle{plainnat}\bibliography{poster}}
 \end{column}
 
 \separatorcolumn
@@ -190,7 +211,7 @@ Quadratic Julia Sets}
 		and a resolution. We will check if every point on the lattice
 		\inputminted[firstline=102,lastline=103]{python}{../visualize.py}
 		remains bounded.
-		We do this by applying $Q_c$ a set number of times to each seed value.
+		We do this by applying $Q_c$ a set number of times to each seed.
 		If $Q^{m}_c(z)$ does not exceed our escape criteria after a large number
     of iterations, we consider it part of $K(Q_c)$.
 		We use a NumPy matrix to concisely express these operations:
@@ -211,6 +232,15 @@ Quadratic Julia Sets}
 		on the lattice.
 		It is available on Shadertoy here: \href{https://www.shadertoy.com/view/tXfXWj}{shadertoy.com/view/tXfXWj}.
 		\inputminted[firstline=271,lastline=278]{glsl}{../render.glsl}
+
+		We extended this code to render the mosaic in Figure \ref{fig:mandelbrot}
+		as well as to support user interaction.
+		These versions are available here:
+		\begin{multicols}{2}
+			\begin{itemize}
+				\item \href{https://www.shadertoy.com/view/3XlXWj}{shadertoy.com/view/3XlXWj} \item \href{https://www.shadertoy.com/view/WXlXD2}{shadertoy.com/view/WXlXD2}
+			\end{itemize}
+		\end{multicols}
 	\end{block}
 \end{column}
 
@@ -218,12 +248,6 @@ Quadratic Julia Sets}
 
 \begin{column}{\colwidth}
 	\begin{block}{Conclusions}
-		% \begin{figure}
-		%   \centering
-		%   \includegraphics[width=8in]{../figures/connectedness.png}
-		%   \caption{....}
-		% \end{figure}
-
 		Through diverse visualization methods, various facts about
 		quadratic Juila sets present themselves.
 
@@ -293,7 +317,7 @@ Quadratic Julia Sets}
 					}
 
 					\draw[dotted] (interior-c) -- (boundary-c) -- (exterior-c);
-					\draw[dotted] (-1.46, -0.012) -- (0.7, -0.012);
+					\draw[dashed] (-1.46, -0.012) -- (0.7, -0.012);
 					\path[-latex]
 						(exterior-c) edge ($(exterior.east) - (0.28in, 0)$)
 						(boundary-c) edge ($(boundary.east) - (0.28in, 0)$)
@@ -301,35 +325,10 @@ Quadratic Julia Sets}
 						(left-rabbit-c) edge ($(left-rabbit.west) + (0.24in, 0)$)
 						(right-rabbit-c) edge ($(right-rabbit.west) + (0.24in, 0)$);
 				\end{tikzpicture}
-				%\begin{minipage}{2.5in}
-				%	\begin{tabular}{c}
-				%		\includegraphics[width=2.5in]{../figures/left-rabbit-ticks.png} \\
-				%		\includegraphics[width=2.5in]{../figures/right-rabbit-ticks.png}
-				%	\end{tabular}
-				%\end{minipage}
-				%\begin{minipage}{5in}
-				%	\includegraphics[width=5in]{../figures/dithered-mandelbrot-inverted-ticks.png}
-				%\end{minipage}
-				%\begin{minipage}{2.5in}
-				%	\begin{tabular}{c}
-				%		\includegraphics[width=2.5in]{../figures/exterior-ticks.png} \\
-				%		\includegraphics[width=2.5in]{../figures/boundary-ticks.png} \\
-				%		\includegraphics[width=2.5in]{../figures/interior-ticks.png}
-				%	\end{tabular}
-				%\end{minipage}
 			\end{center}
 			\caption{Selected subimages of the Mandelbrot mosaic.}
 		\end{figure}
 	\end{block}
-
-
-	% \begin{block}{References}
-
-	% 	\nocite{*}
-	% 	\footnotesize{\bibliographystyle{plainnat}\bibliography{poster}}
-
-	% \end{block}
-
 \end{column}
 
 \separatorcolumn

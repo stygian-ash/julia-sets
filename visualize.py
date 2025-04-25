@@ -105,10 +105,10 @@ def plot_quadratic_julia_set(c, xmin=-2, xmax=2, ymin=-2, ymax=2, points=1000, a
 	z = z0**2 + c
 	# indicator = np.logical_or(np.isnan(z), np.abs(z) > thresh)
 	# image = np.maximum(image, (1 if binary else step) * indicator)
-	thresh = max(abs(c), 2)
+	k = max(abs(c), 2)
 	image = np.zeros_like(z0, float)
 	for step in range(iterlimit, 0, -1):
-		indicator = np.abs(z) > thresh
+		indicator = np.abs(z) > k
 		image = np.maximum(image, step * indicator)
 		z = z**2 + c
 	def plot(axes):

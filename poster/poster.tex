@@ -92,8 +92,8 @@ Quadratic Julia Sets}
 % ====================
 
 % use this to include logos on the left and/or right side of the header:
-% \logoright{\includegraphics[height=7cm]{logo1.pdf}}
-% \logoleft{\includegraphics[height=7cm]{logo2.pdf}}
+\logoright{\includegraphics[height=2in]{logos/math-day-logo.png}}
+\logoleft{\includegraphics[height=1.5in]{logos/RGB_color_NYIT_logo_darkbg.png}}
 
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -115,22 +115,25 @@ Quadratic Julia Sets}
 % ====================
 
 \begin{document}
-\addtobeamertemplate{headline}{}
-{
-	\begin{tikzpicture}[remember picture,overlay]
-		\node[anchor=north west] (top-left)
-			at ($(current page.north west) + (.8cm, -.8cm)$)
-			{\includegraphics[width=2in]{../figures/md9p0i-ticks.png}};
-		\node[right=of top-left]
-			{\includegraphics[width=2in]{../figures/0p1i-ticks.png}};
-
-		\node[anchor=north east] (top-right)
-			at ($(current page.north east) + (-.8cm, -.8cm)$)
-			{\includegraphics[width=2in]{../figures/mandelbrot-ticks.png}};
-		\node[left=of top-right]
-			{\includegraphics[width=2in]{../figures/md966pd259i-ticks.png}};
-	\end{tikzpicture}
-}
+% \addtobeamertemplate{headline}{}
+% {
+% 	\begin{tikzpicture}[remember picture,overlay]
+% 		% \node[anchor=north west] (math-day-logo)
+% 		% 	at ($(current page.north west) + (.8cm, -.8cm)$)
+% 		% 	{\includegraphics[height=2in]{logos/math-day-logo.png}};
+% 		% \node[anchor=north west] (top-left)
+% 		% 	at ($(current page.north west) + (.8cm, -.8cm)$)
+% 		% 	{\includegraphics[width=2in]{../figures/md9p0i-ticks.png}};
+% 		% \node[right=of top-left]
+% 		% 	{\includegraphics[width=2in]{../figures/0p1i-ticks.png}};
+%
+% 		\node[anchor=north east] (top-right)
+% 			at ($(current page.north east) + (-.8cm, -.8cm)$)
+% 			{\includegraphics[width=2in]{../figures/mandelbrot-ticks.png}};
+% 		\node[left=of top-right]
+% 			{\includegraphics[width=2in]{../figures/md966pd259i-ticks.png}};
+% 	\end{tikzpicture}
+% }
 
 \begin{frame}[t]
 \begin{columns}[t]
@@ -198,6 +201,12 @@ Quadratic Julia Sets}
 	\hrule
 	\nocite{*}
 	\footnotesize{\bibliographystyle{plainnat}\bibliography{poster}}
+
+  \hfill
+  \includegraphics[width=1.5in]{../figures/md9p0i-ticks-dark.png} \hfill
+  \includegraphics[width=1.5in]{../figures/0p1i-ticks-dark.png} \hfill
+  \includegraphics[width=1.5in]{../figures/md966pd259i-ticks-dark.png} \hfill
+  \includegraphics[width=1.5in]{../figures/mandelbrot-ticks-dark.png} \hspace*{\fill}
 \end{column}
 
 \separatorcolumn
@@ -213,7 +222,7 @@ Quadratic Julia Sets}
 		remains bounded.
 		We do this by applying $Q_c$ a set number of times to each seed.
 		If $Q^{m}_c(z)$ does not exceed our escape criteria after a large number
-    of iterations, we consider it part of $K(Q_c)$.
+		of iterations, we consider it part of $K(Q_c)$.
 		We use a NumPy matrix to concisely express these operations:
 		\inputminted[firstline=108,lastline=113]{python}{../visualize.py}
 		This produces another matrix, which we scale to the interval

@@ -4,6 +4,9 @@ import sys
 import math
 import cmath
 import logging
+import itertools
+import multiprocess
+from multiprocess import Pool
 
 import numpy as np
 from mpmath import mp
@@ -59,10 +62,14 @@ def plot_julia_set(f, xmin=5, xmax=5, ymin=-5, ymax=-5, points=50, axes=plt,
 	for step in range(iterlimit, 0, -1):
 		image = np.maximum(image, (1 if binary else step) * (np.abs(z) > thresh))
 		z = f(z)
-	axes.set_xlabel('Re(z)')
-	axes.set_ylabel('Im(z)')
-	axes.set_title('Julia Set')
-	axes.imshow(image / (1 if binary else iterlimit), extent=(xmin, xmax, ymin, ymax), origin='lower')
+	def plot(ax):
+		ax.set_xlabel('Re(z)')
+		ax.set_ylabel('Im(z)')
+		ax.set_title('Julia Set')
+		ax.imshow(image / (1 if binary else iterlimit), extent=(xmin, xmax, ymin, ymax), origin='lower')
+	if axes is not None:
+		plot(axes)
+	return plot
 
 def texify(x, n=2, plus=False):
 	s = f'%{"+" if plus else ""}.{n}g' % x
@@ -74,6 +81,7 @@ def texify(x, n=2, plus=False):
 	return fr'{frac} \times 10^{exp}'
 
 def format_complex(z, n=2, plus=True, ε=1e-12):
+	return '%+0.3g %+0.3gi' % (z.real, z.imag)
 	if abs(z.imag) < ε:
 		if abs(z.real) < ε:
 			return '+0' if plus else '0'
@@ -81,44 +89,81 @@ def format_complex(z, n=2, plus=True, ε=1e-12):
 	if abs(z.real < ε):
 		if abs(z.imag - 1) < ε:
 			return '+i' if plus else 'i'
+		if abs(z.imag + 1) < ε:
+			return '-i' if plus else 'i'
 		return texify(z.imag, n, plus) + 'i'
 	if abs(z.imag - 1) < ε:
 		return texify(z.real, n, plus) + '+i'
 	return texify(z.real, n, plus) + texify(z.imag, n, True) + 'i'
 
 
-def plot_quadratic_julia_set(c, xmin=5, xmax=5, ymin=-5, ymax=-5, points=50, axes=plt,
-							 iterlimit=10, binary=False):
-	x, y = np.ogrid[xmin:xmax:1j*points, ymin:ymax:1j*points]
+def plot_quadratic_julia_set(c, xmin=-2, xmax=2, ymin=-2, ymax=2, points=1000, axes=plt,
+							 iterlimit=50, binary=False):
+	x, y = np.ogrid[xmin:xmax:1j*points,ymin:ymax:1j*points]
 	z0 = (x + y*1j).T
 	c = complex(c)
 	z = z0**2 + c
+	# indicator = np.logical_or(np.isnan(z), np.abs(z) > thresh)
+	# image = np.maximum(image, (1 if binary else step) * indicator)
 	thresh = max(abs(c), 2)
 	image = np.zeros_like(z0, float)
 	for step in range(iterlimit, 0, -1):
-		# indicator = np.logical_or(np.isnan(z), np.abs(z) > thresh)
 		indicator = np.abs(z) > thresh
-		image = np.maximum(image, (1 if binary else step) * indicator)
+		image = np.maximum(image, step * indicator)
 		z = z**2 + c
-	axes.set_xlabel('Re(z)')
-	axes.set_ylabel('Im(z)')
-	axes.set_title(r'$Q_c(z) = z^2 %s$' % (format_complex(c, 3)))
-	axes.imshow(image / (1 if binary else iterlimit), extent=(xmin, xmax, ymin, ymax), origin='lower')
+	def plot(axes):
+		axes.xlabel('Re(z)')
+		axes.ylabel('Im(z)')
+		axes.title(r'$Q_c(z) = z^2 %s$' % (format_complex(c, 3)))
+		axes.imshow(image / iterlimit, extent=(xmin, xmax, ymin, ymax), origin='lower')
+		# axes.imshow(image / (1 if binary else iterlimit), extent=(xmin, xmax, ymin, ymax), origin='lower')
+	if axes is not None:
+		plot(axes)
+	return plot
 
 def lerp(a, b, t):
 	return b * t + a * (1 - t)
 
-def make_spread(a, b, r, c, ease=lambda z: z, overlap=True):
+def naive_connected_heuristic(c, r=0.25, n=8, N=50):
+	for i in range(n):
+		θ = lerp(0, 2*math.pi, i / n)
+		z0 = r*(np.cos(θ) + 1j * np.sin(θ))
+		z = z0
+		thresh = max(abs(c), 2)
+		for k in range(N):
+			z = z**2 + c
+			if z > thresh:
+				return k / N
+	return 1
+
+def make_spread(a, b, r, c, ease=lambda z: z, overlap=True, shade=lambda r, c: 0,
+				xmin=-2, xmax=2, ymin=-2, ymax=2, threads=1,
+				points=1000, iterlimit=100):
 	plt.rcParams.update({'font.size': 10})
 	fig, axs = plt.subplots(r, c)
 
 	a = complex(a)
 	b = complex(b)
+
+	def get_plot_fn(row, col):
+		ret = plot_quadratic_julia_set(ease(lerp(a, b, (c * row + col) / (r * c - int(overlap))))
+								  + shade(row / (r - int(overlap)), 1 - col / (c - int(overlap))),
+						   xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax,
+						   points=points, iterlimit=iterlimit, axes=plt)
+
+		print('.', end='', flush=True)
+		return ret
+
+	if threads > 1:
+		with Pool(threads) as p:
+			subplots = p.starmap(get_plot_fn, itertools.product(range(r), range(c)))
+	else:
+		subplots = itertools.starmap(get_plot_fn, itertools.product(range(r), range(c)))
+
+	it = iter(subplots)
 	for row in range(r):
 		for col in range(c):
-			plot_quadratic_julia_set(ease(lerp(a, b, (c * row + col) / (r * c - int(overlap)))),
-							xmin=-2, xmax=2, ymin=-2, ymax=2,
-							points=1000, iterlimit=100, axes=axs[row][col])
+			next(it)(axs[row][col])
 			axs[row][col].set_xlabel(None)
 			axs[row][col].set_ylabel(None)
 	fig.suptitle(r'$c$ on line between $%s$ and $%s$'
@@ -127,13 +172,46 @@ def make_spread(a, b, r, c, ease=lambda z: z, overlap=True):
 	return fig, axs
 
 def main():
-	fig, ax = plt.subplots()
-	plot_quadratic_julia_set(1j,
-						  xmin=-2, xmax=2, ymin=-2, ymax=2,
-						  points=5000, iterlimit=50, axes=ax)
+	# fig, ax = plt.subplots()
+	# plot_quadratic_julia_set(1j,
+	# 					  xmin=-2, xmax=2, ymin=-2, ymax=2,
+	# 					  points=5000, iterlimit=50, axes=ax)
 	# make_spread(complex(sys.argv[1]), complex(sys.argv[2]), 3, 7)
-	# fig, axs = make_spread(0, 2*math.pi, 3, 6, lambda θ: np.cos(θ) + np.sin(θ) * 1j, False)
-	# fig.suptitle('$c$ on unit circle')
+	# ε = 0.01
+	# θ = 11 * math.pi / 12
+	# fig, axs = make_spread(θ - ε, θ + ε, 4, 6, lambda θ: np.cos(θ) + np.sin(θ) * 1j, False,
+	# 					xmin=-0.5, xmax=0.5, ymin=-0.5, ymax=0.5)
+	# for row in axs:
+	# 	for subfig in row:
+	# 		subfig.set_title(None)
+	# fig.suptitle('near transition point')
+	fig, axs = make_spread(0, 0, 8, 12,
+						shade=lambda r, c: lerp(-1, 1, c) + lerp(0.5, 1, r) * 1j,
+						xmin=-2, xmax=2, ymin=-2, ymax=2,
+						points=100, iterlimit=50)
+	for row in axs:
+		for f in row:
+			f.set_title(None)
+	fig.suptitle('$c$ on lattice')
+	# fig, ax = plt.subplots()
+	# plot_quadratic_julia_set(-1,
+	# 					  # xmin=-2.5, xmax=2.5, ymin=0, ymax=10,
+	# 					  points=500, iterlimit=50, axes=ax)
+	# plt.show()
+	# fig, axs = plt.subplots()
+	# res = 2000
+	# xs, xe, ys, ye = -0.75, 1.6, -1.2, 1.2
+	# x, y = np.ogrid[xs:xe:1j*res, ys:ye:1j*res]
+	# zs = (-x + y*1j).T
+	# image = np.zeros_like(zs, float)
+	# 
+	# for row in range(len(zs)):
+	# 	for col in range(len(zs[row])):
+	# 		image[row][col] = 1 - naive_connected_heuristic(zs[row][col], r=0.5, N=100)
+	# axs.set_xlabel('Re($z$)')
+	# axs.set_ylabel('Im($z$)')
+	# axs.set_title('Plot of $c$ for which $J_c(Q_c)$ is 2-connected')
+	# axs.imshow(image, extent=(xs, xe, ys, ye), origin='lower')
 	plt.show()
 
 if __name__ == '__main__':

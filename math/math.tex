@@ -1,0 +1,78 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+
+\newcommand{\setbold}{\mathbf}
+\newcommand{\CC}{\setbold{C}}
+\newcommand{\RR}{\setbold{R}}
+\newcommand{\NN}{\setbold{N}}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newcommand{\taggedqed}{\rlap{$\quad \Box$}}
+\newcommand{\noqed}{\renewcommand{\qedsymbol}{}}
+
+\begin{document}
+
+We define $Q_c(z) = z^2 + c$ and \begin{equation*}
+	Q_c^{m}(z) = \overbrace{(Q_c \circ \cdots \circ Q_c)}^{m\ \text{times}}(z)
+	\label{eq:repeated-app}
+\end{equation*}
+
+Note that \begin{equation}
+	Q_c^{n + m}(z) = Q_c^{n}(Q_c^{m}(z)) \label{eq:sum-rule}
+\end{equation}
+
+\begin{theorem}[Triangle Inequalities]
+	\label{thm:triangle}
+	For $z, w \in C$, 
+	\begin{gather}
+		|z + w| \le |z| + |w| \label{eq:triangle} \\
+		|z + w| \ge |z| - |w| \label{eq:inverse-triangle}
+	\end{gather}
+\end{theorem}
+
+\begin{lemma}
+	\label{lem:lower-bound}
+	Let $z, c \in \CC$ and $k = \max(|c|, 2)$.
+	Then for any $m$ \begin{equation*}
+		|z| > k \implies |Q_c^{m}(z)| > k \label{eq:lower-bound}
+	\end{equation*}
+\end{lemma}
+
+\begin{proof}
+	If $|z| > k$ then $|z| > |c|$ and $|z| > 2$.
+	This implies that there is some $\varepsilon > 0$ such that,
+	\begin{equation*}
+		|z| - 1 = 1 + \varepsilon \label{eq:gt-epsilon} > 1
+	\end{equation*}
+	By Theorem \ref{thm:triangle}, \begin{equation*}
+		|Q_c(z)| = |z^2 + c| \ge |z^2| - |c|
+	\end{equation*}
+	Since $|z| > |c|$, we have,
+	\begin{align}
+		|Q_c(z)| &> |z^2| - |z| \nonumber \\
+				 &= (|z| - 1)|z| \nonumber \\
+				 &= (1 + \varepsilon)|z| > z > k \label{eq:gt-k}
+	\end{align}
+	Since $Q_c^{n}(z) = Q_c(Q_c^{n - 1}(z))$, we have, \begin{equation}
+		Q_c^{m}(z) > Q_c^{m - 1}(z) > \cdots > Q^2_c(z) > Q^{1}_c(z) > z > k \taggedqed \label{eq:strictly-inc}
+	\end{equation}
+	\textit{*Is this already sufficient to prove Theorem \ref{thm:escape-criteria}?}
+	\noqed
+\end{proof}
+
+\begin{theorem}[Escape Criteria]
+	\label{thm:escape-criteria}
+	Let $z, c \in \CC$ and $k = \max(|c|, 2)$.
+	Then if $|Q_c^{m}(z)| > k$ for any $m$,
+	then $|Q_c^{n}(z)|$ is unbounded as $n \to \infty$.
+\end{theorem}
+% 
+% \begin{proof}
+% 	Assume that $Q_c^{m}(z) > k$. Let $w = Q_c^{m}(z)$
+% \end{proof}
+
+\end{document}
